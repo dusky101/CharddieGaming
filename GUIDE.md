@@ -11,7 +11,7 @@ Check the Mac has:
 - **Apple silicon**: Apple menu → About This Mac should show an M-series chip.
 - **macOS 27** or later.
 - **An administrator's password**, to install the app.
-- **The child's own user account.** Each account gets its own Steam and games.
+- **The child's (or if its your boss's) own user account.** Each account gets its own Steam and games.
 
 ## 2. Installing the app
 
