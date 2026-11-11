@@ -1,0 +1,42 @@
+From b1b0391f863f9481439b24adf35d4b18fa71b6bf Mon Sep 17 00:00:00 2001
+From: davey <davidralphhughes@gmail.com>
+Date: Wed, 16 Sep 2026 03:25:30 -0700
+Subject: [PATCH] libpng, zlib: drop the TARGET_OS_MAC guards
+
+Recent macOS SDKs define TARGET_OS_MAC through the standard headers,
+so the bundled libpng tries to include <fp.h> and the bundled zlib
+redefines fdopen, both of which break the build. These guards were
+meant for classic Mac OS, which zlib still detects through MACOS and
+libpng through its compiler checks. Upstream removed them in January
+2024 (zlib 1.3.1, libpng 1.6.41).
+---
+ custom/dependencies/libpng/pngpriv.h | 2 +-
+ custom/dependencies/libzlib/zutil.h  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/custom/dependencies/libpng/pngpriv.h b/custom/dependencies/libpng/pngpriv.h
+index 7216050d4..591cac8ca 100644
+--- a/custom/dependencies/libpng/pngpriv.h
++++ b/custom/dependencies/libpng/pngpriv.h
+@@ -509,7 +509,7 @@
+ #  include <float.h>
+ 
+ #  if (defined(__MWERKS__) && defined(macintosh)) || defined(applec) || \
+-    defined(THINK_C) || defined(__SC__) || defined(TARGET_OS_MAC)
++    defined(THINK_C) || defined(__SC__)
+    /* We need to check that <math.h> hasn't already been included earlier
+     * as it seems it doesn't agree with <fp.h>, yet we should really use
+     * <fp.h> if possible.
+diff --git a/custom/dependencies/libzlib/zutil.h b/custom/dependencies/libzlib/zutil.h
+index 24ab06b1c..0b74a70e6 100644
+--- a/custom/dependencies/libzlib/zutil.h
++++ b/custom/dependencies/libzlib/zutil.h
+@@ -118,7 +118,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
+ #  endif
+ #endif
+ 
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS)
+ #  define OS_CODE  0x07
+ #  ifndef Z_SOLO
+ #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os

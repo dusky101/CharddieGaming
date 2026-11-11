@@ -1,0 +1,40 @@
+From ccdeffb8e0f1f7acb53b7a0d97f3008c49cfa64a Mon Sep 17 00:00:00 2001
+From: davey <davidralphhughes@gmail.com>
+Date: Wed, 16 Sep 2026 03:25:30 -0700
+Subject: [PATCH] GLideN64: only enable rect barycoords with coverage
+
+The pointer for rectAttrib::barycoords is only set when
+_glinfo.coverage is true, but the attribute array was enabled
+unconditionally. Since dual-source blending was disabled in the OpenGL
+context (680e033), coverage is never true, so every rect draw runs with
+an enabled attribute that has no buffer object. Core profile drivers
+that enforce this, such as Apple's, reject the draw with
+GL_INVALID_OPERATION. That includes the final copy into the frontend
+framebuffer, so the game renders but the screen stays black.
+
+Mirror the triangle path and enable the attribute together with its
+pointer.
+---
+ .../src/Graphics/OpenGLContext/opengl_BufferedDrawer.cpp     | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/GLideN64/src/Graphics/OpenGLContext/opengl_BufferedDrawer.cpp b/GLideN64/src/Graphics/OpenGLContext/opengl_BufferedDrawer.cpp
+index bf781a265..2dd2294d9 100644
+--- a/GLideN64/src/Graphics/OpenGLContext/opengl_BufferedDrawer.cpp
++++ b/GLideN64/src/Graphics/OpenGLContext/opengl_BufferedDrawer.cpp
+@@ -29,12 +29,13 @@ BufferedDrawer::BufferedDrawer(const GLInfo & _glinfo, CachedVertexAttribArray *
+ 	m_cachedAttribArray->enableVertexAttribArray(rectAttrib::position, true);
+ 	m_cachedAttribArray->enableVertexAttribArray(rectAttrib::texcoord0, true);
+ 	m_cachedAttribArray->enableVertexAttribArray(rectAttrib::texcoord1, true);
+-	m_cachedAttribArray->enableVertexAttribArray(rectAttrib::barycoords, true);
+ 	glVertexAttribPointer(rectAttrib::position, 4, GL_FLOAT, GL_FALSE, sizeof(RectVertex), (const GLvoid *)(offsetof(RectVertex, x)));
+ 	glVertexAttribPointer(rectAttrib::texcoord0, 2, GL_FLOAT, GL_FALSE, sizeof(RectVertex), (const GLvoid *)(offsetof(RectVertex, s0)));
+ 	glVertexAttribPointer(rectAttrib::texcoord1, 2, GL_FLOAT, GL_FALSE, sizeof(RectVertex), (const GLvoid *)(offsetof(RectVertex, s1)));
+-	if (_glinfo.coverage)
++	if (_glinfo.coverage) {
++		m_cachedAttribArray->enableVertexAttribArray(rectAttrib::barycoords, true);
+ 		glVertexAttribPointer(rectAttrib::barycoords, 2, GL_FLOAT, GL_FALSE, sizeof(RectVertex), (const GLvoid *)(offsetof(RectVertex, bc0)));
++	}
+ 
+ 	/* Init buffers for triangles */
+ 	glGenVertexArrays(1, &m_trisBuffers.vao);
